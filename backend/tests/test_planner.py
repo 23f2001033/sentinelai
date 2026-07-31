@@ -20,6 +20,11 @@ VALID = {
 }
 
 
+def settings(**overrides) -> Settings:
+    """Build settings in isolation from any local .env the developer has."""
+    return Settings(_env_file=None, **overrides)
+
+
 class FakeClient:
     provider = "fake"
     model = "fake-model"
@@ -122,50 +127,50 @@ class TestPlanning:
 
 class TestProviderResolution:
     def test_groq_is_the_default(self):
-        config = resolve_provider(Settings(groq_api_key="k"))
+        config = resolve_provider(settings(groq_api_key="k"))
         assert config.provider == "groq"
         assert config.base_url.startswith("https://api.groq.com")
         assert config.model == "llama-3.3-70b-versatile"
         assert config.configured
 
     def test_provider_specific_key_is_picked_up(self):
-        config = resolve_provider(Settings(llm_provider="openrouter", openrouter_api_key="k"))
+        config = resolve_provider(settings(llm_provider="openrouter", openrouter_api_key="k"))
         assert config.api_key == "k"
         assert config.configured
 
     def test_generic_key_overrides_provider_key(self):
-        config = resolve_provider(Settings(llm_provider="groq", groq_api_key="a", llm_api_key="b"))
+        config = resolve_provider(settings(llm_provider="groq", groq_api_key="a", llm_api_key="b"))
         assert config.api_key == "b"
 
     def test_model_override_is_honoured(self):
         config = resolve_provider(
-            Settings(llm_provider="groq", groq_api_key="k", planner_model="llama-3.1-8b-instant")
+            settings(llm_provider="groq", groq_api_key="k", planner_model="llama-3.1-8b-instant")
         )
         assert config.model == "llama-3.1-8b-instant"
 
     def test_base_url_override_is_honoured(self):
         config = resolve_provider(
-            Settings(llm_provider="groq", groq_api_key="k", llm_base_url="http://localhost:1234/v1")
+            settings(llm_provider="groq", groq_api_key="k", llm_base_url="http://localhost:1234/v1")
         )
         assert config.base_url == "http://localhost:1234/v1"
 
     def test_ollama_needs_no_key(self):
-        assert resolve_provider(Settings(llm_provider="ollama")).configured
+        assert resolve_provider(settings(llm_provider="ollama")).configured
 
     def test_missing_key_is_reported_as_unconfigured(self):
-        assert not resolve_provider(Settings(llm_provider="groq")).configured
+        assert not resolve_provider(settings(llm_provider="groq")).configured
 
     def test_unknown_provider_rejected(self):
         with pytest.raises(ProviderError, match="unknown LLM_PROVIDER"):
-            resolve_provider(Settings(llm_provider="hal9000"))
+            resolve_provider(settings(llm_provider="hal9000"))
 
     def test_build_client_without_a_key_explains_how_to_fix_it(self):
         with pytest.raises(ProviderError) as exc:
-            build_client(Settings(llm_provider="groq"))
+            build_client(settings(llm_provider="groq"))
         assert "console.groq.com" in str(exc.value)
 
     def test_anthropic_is_still_selectable(self):
-        config = resolve_provider(Settings(llm_provider="anthropic", anthropic_api_key="k"))
+        config = resolve_provider(settings(llm_provider="anthropic", anthropic_api_key="k"))
         assert config.model == "claude-opus-5"
         assert config.base_url is None
 

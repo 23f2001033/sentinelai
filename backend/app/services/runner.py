@@ -29,7 +29,11 @@ RUN_BUDGET_USD = 1.00
 
 @dataclass
 class RunState:
+    # `steps_taken` counts actions that actually executed and drives the step budget;
+    # `steps_planned` counts everything proposed, so blocked steps still get a unique
+    # position in the timeline.
     steps_taken: int = 0
+    steps_planned: int = 0
     spend_usd: float = 0.0
     approvals_granted: int = 0
     approvals_denied: int = 0
@@ -354,10 +358,11 @@ class RunController:
     async def _create_step(
         self, planned: PlannedAction, params: dict[str, Any], observation: PageObservation
     ) -> Step:
+        self.state.steps_planned += 1
         async with SessionLocal() as session:
             step = Step(
                 run_id=self.run_id,
-                index=self.state.steps_taken + 1,
+                index=self.state.steps_planned,
                 rationale=planned.rationale,
                 action_type=planned.action,
                 action_params=params,

@@ -244,6 +244,26 @@ class TestDeniedPath:
         assert run.status == str(RunStatus.COMPLETED)
         assert any("Denied by" in e.message for e in events)
 
+    async def test_blocked_steps_still_get_a_unique_timeline_position(
+        self, monkeypatch, agent_id, demo_site
+    ):
+        """A blocked step must not share an index with the step that follows it."""
+        script = [
+            lambda obs: PlannedAction(
+                rationale="Enter the card number.",
+                action="type",
+                params={"ref": find_ref(obs, "Card number").ref, "text": "4111"},
+            ),
+            lambda obs: PlannedAction(rationale="Stop.", action="finish",
+                                      params={"summary": "blocked"}),
+        ]
+        _, steps, _ = await run_script(
+            monkeypatch, agent_id, "Pay", f"{demo_site}/checkout.html", script
+        )
+        indices = [s.index for s in steps]
+        assert len(indices) == len(set(indices)), f"duplicate step indices: {indices}"
+        assert indices == sorted(indices)
+
     async def test_policy_denial_blocks_without_asking_a_human(
         self, monkeypatch, agent_id, demo_site
     ):

@@ -242,6 +242,9 @@ docker run -p 8000:8000 -e LLM_PROVIDER=groq -e GROQ_API_KEY=gsk_... sentinelai
 ```
 
 The image is based on `mcr.microsoft.com/playwright/python`, which ships Chromium and its
+system dependencies. A root-level `Dockerfile` exists too, for hosts that expect one there.
+See **[DEPLOY.md](DEPLOY.md)** for Hugging Face Spaces, Railway and Render walkthroughs —
+and for why Vercel and other serverless hosts cannot run this.
 system dependencies. `render.yaml` deploys the same image as a single web service.
 
 ---

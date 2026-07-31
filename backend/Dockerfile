@@ -1,6 +1,8 @@
 # The Playwright base image ships Chromium plus every system library it needs,
 # which is the fiddly part of running a browser-operating agent in a container.
-FROM mcr.microsoft.com/playwright/python:v1.49.1-noble
+# This tag must match the playwright pin in requirements.txt — a mismatch makes
+# Playwright reject the bundled browsers at runtime.
+FROM mcr.microsoft.com/playwright/python:v1.61.0-noble
 
 WORKDIR /app
 

@@ -154,9 +154,12 @@ class BrowserOperator:
     structured action the policy engine can reason about.
     """
 
-    def __init__(self, headless: bool = True, timeout_ms: int = 15000) -> None:
+    def __init__(
+        self, headless: bool = True, timeout_ms: int = 15000, no_sandbox: bool = False
+    ) -> None:
         self.headless = headless
         self.timeout_ms = timeout_ms
+        self.no_sandbox = no_sandbox
         self._playwright = None
         self._browser = None
         self._page = None
@@ -169,8 +172,16 @@ class BrowserOperator:
                 "Playwright is not installed. Run: pip install playwright && playwright install chromium"
             ) from exc
 
+        # --disable-dev-shm-usage avoids Chromium crashing on the small /dev/shm
+        # most container runtimes provide.
+        args = ["--disable-dev-shm-usage"]
+        if self.no_sandbox:
+            args.append("--no-sandbox")
+
         self._playwright = await async_playwright().start()
-        self._browser = await self._playwright.chromium.launch(headless=self.headless)
+        self._browser = await self._playwright.chromium.launch(
+            headless=self.headless, args=args
+        )
         context = await self._browser.new_context(viewport={"width": 1280, "height": 800})
         self._page = await context.new_page()
         self._page.set_default_timeout(self.timeout_ms)

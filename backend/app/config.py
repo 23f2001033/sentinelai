@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     cors_origins: str = "*"
 
     browser_headless: bool = True
+    # Chromium refuses to start as root with its sandbox on, which is the usual
+    # situation inside a container. Prefer running as a non-root user; set this
+    # only if your host forces root.
+    browser_no_sandbox: bool = False
 
     @property
     def cors_origin_list(self) -> list[str]:

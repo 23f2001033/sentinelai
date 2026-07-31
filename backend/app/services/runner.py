@@ -75,7 +75,10 @@ class RunController:
         self.run_id = run_id
         self.settings = get_settings()
         self.state = RunState()
-        self.browser = BrowserOperator(headless=self.settings.browser_headless)
+        self.browser = BrowserOperator(
+            headless=self.settings.browser_headless,
+            no_sandbox=self.settings.browser_no_sandbox,
+        )
         self._engine: PolicyEngine | None = None
         self._policy_meta: tuple[str, int] = ("", 1)
         self._agent_ctx: dict[str, Any] = {}

@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request sent — Northwind Procurement</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Northwind Procurement</span>
+    <nav aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="invoices.html">Invoices</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Meeting request sent</h1>
+    <p class="lede">The vendor's account manager will confirm by email.</p>
+    <div class="card">
+      <h2>Summary</h2>
+      <table id="summary"><tbody></tbody></table>
+    </div>
+    <a class="btn secondary" href="vendors.html">Back to vendors</a>
+  </main>
+  <script>
+    const rows = document.querySelector('#summary tbody');
+    for (const [key, value] of new URLSearchParams(location.search)) {
+      if (!value) continue;
+      const tr = document.createElement('tr');
+      const th = document.createElement('th');
+      th.textContent = key;
+      const td = document.createElement('td');
+      td.textContent = value;
+      tr.append(th, td);
+      rows.append(tr);
+    }
+    if (!rows.children.length) {
+      rows.innerHTML = '<tr><td>No details captured.</td></tr>';
+    }
+  </script>
+</body>
+</html>

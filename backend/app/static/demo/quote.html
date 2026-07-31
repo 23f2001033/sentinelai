@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Request a quote — Northwind Procurement</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Northwind Procurement</span>
+    <nav aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="invoices.html">Invoices</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Request a quote</h1>
+    <p class="lede" id="vendor-line">Requesting pricing.</p>
+
+    <form class="card" action="confirm.html" method="get">
+      <label for="sku">Part or SKU</label>
+      <input id="sku" name="sku" type="text" placeholder="e.g. AC-4410">
+
+      <label for="qty">Quantity</label>
+      <input id="qty" name="qty" type="number" min="1" value="100">
+
+      <label for="needed">Needed by</label>
+      <input id="needed" name="needed" type="date">
+
+      <div class="row" style="margin-top:18px">
+        <button type="submit" name="action" value="send">Send quote request</button>
+        <a class="btn secondary" href="vendors.html">Cancel</a>
+      </div>
+    </form>
+  </main>
+  <script>
+    const vendor = new URLSearchParams(location.search).get('vendor');
+    if (vendor) {
+      document.getElementById('vendor-line').textContent = 'Requesting pricing from ' + vendor + '.';
+    }
+  </script>
+</body>
+</html>

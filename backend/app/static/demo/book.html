@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Book a meeting — Northwind Procurement</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Northwind Procurement</span>
+    <nav aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="invoices.html">Invoices</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Book a vendor meeting</h1>
+    <p class="lede" id="vendor-line">Scheduling a meeting.</p>
+
+    <form class="card" action="confirm.html" method="get">
+      <label for="contact">Your name</label>
+      <input id="contact" name="contact" type="text" placeholder="Full name" autocomplete="name">
+
+      <label for="email">Work email</label>
+      <input id="email" name="email" type="email" placeholder="you@northwind.example" autocomplete="email">
+
+      <label for="date">Preferred date</label>
+      <input id="date" name="date" type="date">
+
+      <label for="slot">Time slot</label>
+      <select id="slot" name="slot">
+        <option value="morning">Morning (9:00–12:00)</option>
+        <option value="afternoon">Afternoon (13:00–17:00)</option>
+      </select>
+
+      <label for="agenda">Agenda</label>
+      <textarea id="agenda" name="agenda" rows="3" placeholder="What should this meeting cover?"></textarea>
+
+      <div class="row" style="margin-top:18px">
+        <button type="submit" name="action" value="send">Send meeting request</button>
+        <a class="btn secondary" href="vendors.html">Cancel</a>
+      </div>
+    </form>
+  </main>
+  <script>
+    const vendor = new URLSearchParams(location.search).get('vendor');
+    if (vendor) {
+      document.getElementById('vendor-line').textContent = 'Scheduling a meeting with ' + vendor + '.';
+    }
+  </script>
+</body>
+</html>

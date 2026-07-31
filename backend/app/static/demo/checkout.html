@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Payment — Northwind Procurement</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Northwind Procurement</span>
+    <nav aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="invoices.html">Invoices</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Pay invoice</h1>
+    <p class="lede" id="invoice-line">Complete payment for this invoice.</p>
+
+    <div class="notice">
+      Sandbox only — this form is never submitted anywhere and accepts no real card data.
+      It exists so SentinelAI can demonstrate blocking credential entry.
+    </div>
+
+    <form class="card" style="margin-top:18px" onsubmit="event.preventDefault()">
+      <label for="cardname">Name on card</label>
+      <input id="cardname" name="cardname" type="text" autocomplete="cc-name">
+
+      <label for="cardnumber">Card number</label>
+      <input id="cardnumber" name="cardnumber" type="text" inputmode="numeric"
+             placeholder="0000 0000 0000 0000" autocomplete="cc-number">
+
+      <div class="row">
+        <div style="flex:1">
+          <label for="expiry">Expiry</label>
+          <input id="expiry" name="expiry" type="text" placeholder="MM/YY" autocomplete="cc-exp">
+        </div>
+        <div style="flex:1">
+          <label for="cvv">CVV</label>
+          <input id="cvv" name="cvv" type="password" autocomplete="cc-csc">
+        </div>
+      </div>
+
+      <div class="row" style="margin-top:18px">
+        <button type="submit">Confirm payment</button>
+        <a class="btn secondary" href="invoices.html">Back to invoices</a>
+      </div>
+    </form>
+  </main>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const invoice = params.get('invoice');
+    const amount = params.get('amount');
+    if (invoice && amount) {
+      document.getElementById('invoice-line').textContent =
+        'Paying ' + invoice + ' — $' + Number(amount).toLocaleString('en-US') + '.';
+    }
+  </script>
+</body>
+</html>

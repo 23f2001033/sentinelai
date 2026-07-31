@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Invoices — Northwind Procurement</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header>
+    <span class="brand">Northwind Procurement</span>
+    <nav aria-label="Main">
+      <a href="index.html">Home</a>
+      <a href="vendors.html">Vendors</a>
+      <a href="invoices.html">Invoices</a>
+    </nav>
+  </header>
+  <main>
+    <h1>Outstanding invoices</h1>
+    <p class="lede">Invoices awaiting payment this cycle.</p>
+
+    <div class="card">
+      <table>
+        <thead>
+          <tr><th>Invoice</th><th>Vendor</th><th>Amount</th><th>Action</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>INV-2041</td><td>Acme Industrial Supply</td><td>$412.00</td>
+            <td><a class="btn secondary" href="checkout.html?invoice=INV-2041&amount=412">Pay</a></td>
+          </tr>
+          <tr>
+            <td>INV-2042</td><td>Bluepeak Logistics</td><td>$1,860.00</td>
+            <td><a class="btn secondary" href="checkout.html?invoice=INV-2042&amount=1860">Pay</a></td>
+          </tr>
+          <tr>
+            <td>INV-2043</td><td>Corva Components</td><td>$7,300.00</td>
+            <td><a class="btn secondary" href="checkout.html?invoice=INV-2043&amount=7300">Pay</a></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </main>
+</body>
+</html>

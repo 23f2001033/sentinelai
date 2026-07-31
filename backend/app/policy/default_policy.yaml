@@ -1,0 +1,226 @@
+name: Baseline Enterprise Policy
+description: >
+  Default governance posture for a browser-operating AI employee. Read-only work runs
+  unattended; anything that writes, spends, sends, or touches credentials stops for a human.
+default_effect: require_approval
+default_reason: >
+  No rule covers this action, so the deny-by-default posture applies and a human must decide.
+
+rules:
+  - id: allow-read-only
+    description: Observing and reading a page never changes anything, so it runs unattended.
+    effect: allow
+    priority: 10
+    reason: Read-only observation carries no side effects.
+    tags: [read]
+    when:
+      any:
+        - field: action.type
+          op: in
+          value: [read_page, scroll, wait, observe]
+
+  - id: allow-navigation-within-allowlist
+    description: Navigating to an approved business domain is routine.
+    effect: allow
+    priority: 20
+    reason: Destination is on the organisation's approved-domain allowlist.
+    tags: [navigation]
+    when:
+      all:
+        - field: action.type
+          op: eq
+          value: navigate
+        - field: action.domain
+          op: in
+          case_sensitive: false
+          value:
+            - localhost
+            - 127.0.0.1
+            - example.com
+            - www.example.com
+            - vendor-portal.example.com
+            - docs.example.com
+
+  - id: approve-navigation-off-allowlist
+    description: Leaving the allowlist could take the agent somewhere untrusted.
+    effect: require_approval
+    priority: 25
+    risk: 40
+    reason: Destination is outside the approved-domain allowlist.
+    tags: [navigation]
+    when:
+      all:
+        - field: action.type
+          op: eq
+          value: navigate
+        - field: action.domain
+          op: not_in
+          case_sensitive: false
+          value:
+            - localhost
+            - 127.0.0.1
+            - example.com
+            - www.example.com
+            - vendor-portal.example.com
+            - docs.example.com
+
+  - id: allow-benign-clicks
+    description: Clicking ordinary navigation controls is low risk.
+    effect: allow
+    priority: 15
+    reason: Ordinary in-page control with no destructive wording.
+    tags: [interaction]
+    when:
+      all:
+        - field: action.type
+          op: eq
+          value: click
+        - field: action.label
+          op: not_contains
+          case_sensitive: false
+          value: delete
+
+  - id: allow-typing-non-sensitive
+    description: Filling ordinary form fields is part of normal work.
+    effect: allow
+    priority: 15
+    reason: Non-sensitive field entry.
+    tags: [interaction]
+    when:
+      all:
+        - field: action.type
+          op: eq
+          value: type
+        - field: action.is_sensitive
+          op: eq
+          value: false
+
+  - id: deny-credential-entry
+    description: The agent must never type credentials, card numbers or secrets.
+    effect: deny
+    priority: 100
+    risk: 100
+    reason: Entering credentials or payment secrets is never permitted for an autonomous agent.
+    tags: [security, credentials]
+    when:
+      any:
+        - field: action.is_sensitive
+          op: eq
+          value: true
+        - field: action.label
+          op: matches
+          case_sensitive: false
+          value: "password|passcode|cvv|card number|ssn|social security|api[ _-]?key|secret"
+
+  - id: deny-destructive-actions
+    description: Irreversible removals are out of scope for autonomous operation.
+    effect: deny
+    priority: 95
+    risk: 90
+    reason: Irreversible deletion is outside the agent's mandate.
+    tags: [destructive]
+    when:
+      field: action.label
+      op: matches
+      case_sensitive: false
+      value: "delete account|delete permanently|remove all|wipe|terminate account"
+
+  - id: approve-form-submission
+    description: Submitting a form writes data to a third-party system.
+    effect: require_approval
+    priority: 50
+    risk: 55
+    reason: Form submission writes data to an external system.
+    tags: [write]
+    when:
+      field: action.type
+      op: eq
+      value: submit
+
+  - id: approve-outbound-message
+    description: Anything that contacts a human outside the company needs sign-off.
+    effect: require_approval
+    priority: 60
+    risk: 60
+    reason: The action sends an outbound message on the organisation's behalf.
+    tags: [communication]
+    when:
+      any:
+        - field: action.type
+          op: in
+          value: [send_email, send_message]
+        - field: action.label
+          op: matches
+          case_sensitive: false
+          value: "send|invite|publish|post|share"
+
+  - id: approve-spend-over-threshold
+    description: Spending above the unattended limit needs a human on the hook.
+    effect: require_approval
+    priority: 70
+    risk: 70
+    reason: Amount exceeds the $500 unattended spending limit.
+    tags: [finance]
+    when:
+      all:
+        - field: action.amount_usd
+          op: exists
+        - field: action.amount_usd
+          op: gt
+          value: 500
+
+  - id: deny-spend-over-hard-cap
+    description: No human can approve a single agent-initiated spend above the hard cap.
+    effect: deny
+    priority: 110
+    risk: 100
+    reason: Amount exceeds the $5,000 hard cap for agent-initiated spending.
+    tags: [finance]
+    when:
+      all:
+        - field: action.amount_usd
+          op: exists
+        - field: action.amount_usd
+          op: gt
+          value: 5000
+
+  - id: approve-checkout-pages
+    description: Any interaction on a payment page is treated as financial.
+    effect: require_approval
+    priority: 65
+    risk: 65
+    reason: The current page looks like a checkout or payment flow.
+    tags: [finance]
+    when:
+      all:
+        - field: page.url
+          op: matches
+          case_sensitive: false
+          value: "checkout|payment|billing|/pay"
+        - field: action.type
+          op: in
+          value: [click, type, submit, select]
+
+  - id: approve-file-download
+    description: Downloads pull untrusted bytes into the environment.
+    effect: require_approval
+    priority: 45
+    risk: 50
+    reason: Downloading files from the web needs human review.
+    tags: [security]
+    when:
+      field: action.type
+      op: eq
+      value: download
+
+  - id: deny-run-budget-exhausted
+    description: A run that has burned its model budget stops rather than continuing blind.
+    effect: deny
+    priority: 120
+    risk: 80
+    reason: This run has exhausted its model-spend budget.
+    tags: [budget]
+    when:
+      field: session.budget_exhausted
+      op: eq
+      value: true

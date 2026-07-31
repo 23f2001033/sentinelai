@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: sentinelai
+    runtime: docker
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: ./backend
+    plan: starter
+    healthCheckPath: /api/health
+    envVars:
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: PLANNER_MODEL
+        value: claude-opus-5
+      - key: BROWSER_HEADLESS
+        value: "true"

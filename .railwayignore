@@ -1,0 +1,10 @@
+# Railway uploads the working directory, so keep the build context to source only.
+# The image installs dependencies itself from backend/requirements.txt.
+backend/.venv/
+frontend/node_modules/
+.git/
+__pycache__/
+*.pyc
+.pytest_cache/
+*.db
+.env

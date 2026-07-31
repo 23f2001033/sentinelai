@@ -155,9 +155,11 @@ class RunController:
             action="navigate",
             params={"url": self._start_url, "label": "starting page"},
         )
-        await self._process(action, PageObservation())
+        await self._process(action, PageObservation(), operator_directed=True)
 
-    async def _process(self, planned: PlannedAction, observation: PageObservation) -> None:
+    async def _process(
+        self, planned: PlannedAction, observation: PageObservation, *, operator_directed: bool = False
+    ) -> None:
         try:
             params = validate_action(planned.action, planned.params)
         except ActionValidationError as exc:
@@ -179,7 +181,13 @@ class RunController:
         if planned.action == "finish":
             raise RunFinished(RunStatus.COMPLETED, str(params.get("summary", "")))
 
-        evaluation = self._evaluate(planned.action, params, observation)
+        evaluation = (
+            PolicyEngine.preauthorized(
+                "The run's starting page was specified by the operator, not chosen by the agent."
+            )
+            if operator_directed
+            else self._evaluate(planned.action, params, observation)
+        )
         await self._persist_decision(step.id, evaluation)
         await self._log(
             AuditKind.POLICY_EVALUATED,

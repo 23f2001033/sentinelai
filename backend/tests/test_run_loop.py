@@ -76,6 +76,34 @@ async def agent_id():
         return agent.id
 
 
+@pytest_asyncio.fixture(scope="module", loop_scope="module")
+async def strict_agent_id():
+    """An agent whose policy gates every navigation, with no allowlist carve-out.
+
+    Used to prove the opening navigation to the operator-supplied start_url is never
+    gated, even under a policy that would gate the agent choosing to navigate anywhere.
+    """
+    await init_db()
+    async with SessionLocal() as session:
+        policy = PolicySet(
+            name="Strict Navigation Policy",
+            default_effect="deny",
+            rules=[
+                {"id": "approve-all-navigation", "effect": "require_approval", "priority": 10,
+                 "reason": "Every navigation needs a human.",
+                 "when": {"field": "action.type", "op": "eq", "value": "navigate"}},
+                {"id": "allow-read", "effect": "allow", "priority": 10,
+                 "when": {"field": "action.type", "op": "eq", "value": "read_page"}},
+            ],
+        )
+        session.add(policy)
+        await session.flush()
+        agent = Agent(name="Strict Nav Agent", role="tester", policy_set_id=policy.id)
+        session.add(agent)
+        await session.commit()
+        return agent.id
+
+
 class ScriptedPlanner:
     """Stands in for Claude, returning a fixed sequence of actions."""
 
@@ -340,3 +368,49 @@ class TestLoopSafety:
         llm_events = [e for e in events if e.kind == "llm_call"]
         assert len(llm_events) == 2
         assert all(e.payload["cost_usd"] > 0 for e in llm_events)
+
+
+class TestOperatorDirectedStart:
+    """Regression: the run's starting URL must never gate, even under a policy that
+    would gate every navigation the agent itself proposes.
+
+    Caught live on the Railway deployment — the sandbox site moved onto the same host
+    as the app, which wasn't on the shipped policy's navigation allowlist, so the very
+    first step of every run paused for approval before the agent did anything.
+    """
+
+    async def test_opening_navigation_is_never_gated(
+        self, monkeypatch, strict_agent_id, demo_site
+    ):
+        script = [
+            lambda obs: PlannedAction(rationale="Done.", action="finish",
+                                      params={"summary": "read"}),
+        ]
+        run, steps, _ = await run_script(
+            monkeypatch, strict_agent_id, "Just look", f"{demo_site}/index.html", script
+        )
+        opening = steps[0]
+        assert opening.action_type == "navigate"
+        assert opening.status == str(StepStatus.SUCCEEDED)
+        assert opening.decision.effect == "allow"
+        assert opening.approval is None, "the operator-chosen start_url must never create an approval"
+        assert run.status == str(RunStatus.COMPLETED)
+
+    async def test_the_agents_own_navigation_choices_are_still_gated(
+        self, monkeypatch, strict_agent_id, demo_site
+    ):
+        """The bypass must be scoped to the opening step only, not navigation in general."""
+        script = [
+            lambda obs: PlannedAction(
+                rationale="Go look at the vendor page instead.",
+                action="navigate",
+                params={"url": f"{demo_site}/vendors.html"},
+            ),
+        ]
+        run, steps, _ = await run_script(
+            monkeypatch, strict_agent_id, "Wander off", f"{demo_site}/index.html", script,
+            auto_decide=ApprovalStatus.DENIED,
+        )
+        agent_chosen = steps[1]
+        assert agent_chosen.decision.effect == "require_approval"
+        assert agent_chosen.approval is not None

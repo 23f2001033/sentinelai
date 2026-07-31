@@ -104,6 +104,16 @@ class PolicyEngine:
     def from_dict(cls, data: dict[str, Any]) -> PolicyEngine:
         return cls(PolicySpec.model_validate(data))
 
+    @staticmethod
+    def preauthorized(reason: str) -> PolicyEvaluation:
+        """A decision for actions a human already authorised out-of-band.
+
+        Used for the operator-supplied starting URL: choosing where a run begins is a
+        human decision made when the run was created, not a policy question for the
+        agent's own choices. It still gets a normal decision row for the audit trail.
+        """
+        return PolicyEvaluation(effect=Effect.ALLOW, reason=reason, matches=[], used_default=False)
+
     def evaluate(self, context: dict[str, Any]) -> PolicyEvaluation:
         warnings: list[str] = []
         matches: list[tuple[int, Rule]] = []

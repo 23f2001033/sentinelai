@@ -161,6 +161,25 @@ class TestCombinators:
         assert e.evaluate(ctx()).effect is Effect.DENY
 
 
+class TestPreauthorized:
+    """The operator-directed bypass used for a run's starting URL."""
+
+    def test_is_always_allow(self):
+        result = PolicyEngine.preauthorized("operator chose this")
+        assert result.effect is Effect.ALLOW
+
+    def test_carries_the_given_reason(self):
+        result = PolicyEngine.preauthorized("operator chose this")
+        assert result.reason == "operator chose this"
+
+    def test_is_not_reported_as_a_default_fallback(self):
+        """Must read as a deliberate decision in the audit trail, not 'no rule matched'."""
+        assert PolicyEngine.preauthorized("x").used_default is False
+
+    def test_carries_no_matched_rules(self):
+        assert PolicyEngine.preauthorized("x").matches == []
+
+
 class TestResolution:
     def test_no_match_uses_default_effect(self):
         e = engine_with([rule("r", "allow", {"field": "action.type", "op": "eq", "value": "zzz"})])

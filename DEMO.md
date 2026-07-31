@@ -75,19 +75,31 @@ explanation separately, so the script gives each one dedicated time.
 
 ---
 
-## 2:30 — 3:00 · The block that can't be approved
+## 2:30 — 3:05 · The block that can't be approved
 
-*Start a second run with the preset **Pay an outstanding invoice**.*
+*Start a second run with the preset **Delete a vendor (gets blocked)**.*
 
-> "Different job: pay an invoice. The agent gets to the payment page, and tries to enter the
-> card number."
+> "Different job, and a destructive one: remove a supplier's account entirely. The agent finds
+> the settings page and goes for the delete button."
 
-*The step shows as blocked.*
+*The step shows as blocked, in red.*
 
-> "Blocked — and note there's no Approve button. This isn't a confirmation dialog I can click
-> through; `deny` is terminal. Critically, the agent claimed this was an ordinary text field.
-> SentinelAI doesn't trust that: it re-reads the field from the live DOM, sees
+> "Blocked — and notice there's no Approve button. This isn't a confirmation dialog I can click
+> through. `deny` is terminal: no human in this console is allowed to authorise it. The agent
+> reads the block, stops, and reports the blocker honestly instead of hunting for a workaround."
+
+*Optional, if you want the credential angle too — say it over the same screen rather than
+running a second job:*
+
+> "The same thing guards credentials. And there the model isn't trusted at all: it can claim a
+> field is ordinary text, but SentinelAI re-reads it from the live DOM, sees
 > `autocomplete="cc-number"`, and denies it regardless of what the model said."
+
+**Why this scenario and not the payment page:** in live testing the model usually *self-censors*
+on the card field — it sees the SENSITIVE marker and declines on its own, so the policy engine
+never visibly fires. That's good defence in depth but a bad demo, because the layer you want to
+show does nothing. The delete scenario reproduces reliably: the model is happy to click the
+button, and the engine is what stops it.
 
 ---
 
@@ -109,13 +121,14 @@ explanation separately, so the script gives each one dedicated time.
 
 ## 3:35 — 4:00 · Technical close
 
-> "The stack: FastAPI and async SQLAlchemy on the backend, Playwright driving Chromium, Claude
-> Opus 5 as the planner with structured outputs so actions come back as validated JSON, React
-> and Tailwind for the console, WebSockets for the live stream.
+> "The stack: FastAPI and async SQLAlchemy on the backend, Playwright driving Chromium, React
+> and Tailwind for the console, WebSockets for the live stream. The planner is provider-agnostic
+> — this ran on Llama 3.3 70B via Groq, and one env var switches it to Claude, GPT, or a local
+> Ollama model.
 >
 > The design decision I'd point at: the planner proposes, it never executes. It gets a fixed
 > action surface — no arbitrary JavaScript — so every step is something the policy engine can
-> reason about. 154 tests cover it, including seven that run the whole loop end to end and
+> reason about. 182 tests cover it, including eight that run the whole loop end to end and
 > assert a denied action provably never happened.
 >
 > That's SentinelAI: AI employees you can actually let near production."

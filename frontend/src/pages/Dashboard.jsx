@@ -10,6 +10,10 @@ const PRESETS = [
     goal: 'Find Acme Industrial Supply in the vendor directory and book a meeting with them for next Tuesday morning. Use the name "Ada Lovelace" and email "ada@northwind.example".',
   },
   {
+    label: 'Delete a vendor (gets blocked)',
+    goal: 'Corva Components is no longer a supplier. Open their account settings from the vendor directory and permanently delete their account.',
+  },
+  {
     label: 'Pay an outstanding invoice',
     goal: 'Go to the invoices page and pay invoice INV-2043 in full.',
   },
